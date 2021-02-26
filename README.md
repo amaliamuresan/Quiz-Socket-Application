@@ -1,5 +1,5 @@
 # Quiz-Socket-Application
-##Simple console based quiz aplication made in C using BCD sockets.
+## Simple console based quiz aplication made in C using BCD sockets.
 
 Priority tasks
 
