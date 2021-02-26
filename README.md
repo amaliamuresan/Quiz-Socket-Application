@@ -1,17 +1,17 @@
 # Quiz-Socket-Application
 Server:
-[ ] - Server setup routine
-[ ] - Server file management functions (user identify by nickname, questions and answers, ...)
-	[ ] - Read from files
-	[ ] - Modify files (eg: a client answers a question, and his answer is saved)
-[ ] - Server listener thread (listen for incoming connections from clients)
-[ ] - Server client handler thread (unique thread for each connected client)
-	[ ] - Client identification (eg: nickname -> client socket)
-	[ ] - Client communication (recieve)
-[ ] - Client keyword interpretation
-[ ] - Server client transmission (data transmission)
-	eg: send_data_function(data, client_socket)
-[ ] - Optional Client status check thread
+- [ ] Server setup routine
+- [ ] Server file management functions (user identify by nickname, questions and answers, ...)
+	- [ ] Read from files
+	- [ ] Modify files (eg: a client answers a question, and his answer is saved)
+- [ ] Server listener thread (listen for incoming connections from clients)
+- [ ] Server client handler thread (unique thread for each connected client)
+	- [ ] Client identification (eg: nickname -> client socket)
+	- [ ] Client communication (recieve)
+- [ ] Client keyword interpretation
+- [ ] Server client transmission (data transmission)
+	- eg: send_data_function(data, client_socket)
+- [ ] Optional Client status check thread
 	- if a client stopped responding or failed the conenction, we cand disconnect it
 
 Server threads: 
@@ -21,17 +21,17 @@ Server threads:
 	-Optional Client status check thread
 
 Client:
-[ ] - Client initialization routine
-[ ] - Client connect to server routine
-[ ] - Client recieve thread (server -> client)
-[ ] - Client transmission function (client -> server)
-[ ] - Client set nickname
-[ ] - Client question list menu
-[ ] - Client answer question menu
-	[ ] - Question answered
-	[ ] - Display your answer, others answer and the correct/suggested answer
-	[ ] - Possible return to menu
-[ ] - Optional disconnect from server
+- [ ] Client initialization routine
+- [ ] Client connect to server routine
+- [ ] Client recieve thread (server -> client)
+- [ ] Client transmission function (client -> server)
+- [ ] Client set nickname
+- [ ] Client question list menu
+- [ ] Client answer question menu
+	- [ ] Question answered
+	- [ ] Display your answer, others answer and the correct/suggested answer
+	- [ ] Possible return to menu
+- [ ] Optional disconnect from server
 	- Using keyword "Exit"
 	- After disconnect from server, program ends, ? console will close
 
@@ -42,14 +42,14 @@ Client threads:
 
 Priority tasks
 
-[ ] - Server setup routine - Theo
-[ ] - Server listener thread (listen for incoming connections from clients) - Amalia
-[ ] - Server client handler thread (unique thread for each connected client) - Dorian
-	[ ] - Client communication (recieve)
-[ ] - Server client transmission (data transmission) - Vlad
+- [ ] Server setup routine - Theo
+- [ ] Server listener thread (listen for incoming connections from clients) - Amalia
+- [ ] Server client handler thread (unique thread for each connected client) - Dorian
+- [ ] Client communication (recieve)
+- [ ] Server client transmission (data transmission) - Vlad
 
 
-[ ] - Client initialization routine - Theo
-[ ] - Client connect to server routine - Amalia
-[ ] - Client recieve thread (server -> client) - Dorian
-[ ] - Client transmission function (client -> server) - Vlad
+- [ ] Client initialization routine - Theo
+- [ ] Client connect to server routine - Amalia
+- [ ] Client recieve thread (server -> client) - Dorian
+- [ ] Client transmission function (client -> server) - Vlad
