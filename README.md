@@ -1,4 +1,22 @@
 # Quiz-Socket-Application
+##Simple console based quiz aplication made in C using BCD sockets.
+
+Priority tasks
+
+- [ ] Server setup routine - Theo
+- [ ] Server listener thread (listen for incoming connections from clients) - Amalia
+- [ ] Server client handler thread (unique thread for each connected client) - Dorian
+- [ ] Client communication (recieve)
+- [ ] Server client transmission (data transmission) - Vlad
+
+
+- [ ] Client initialization routine - Theo
+- [ ] Client connect to server routine - Amalia
+- [ ] Client receive thread (server -> client) - Dorian
+- [ ] Client transmission function (client -> server) - Vlad
+
+
+
 Server:
 - [ ] Server setup routine
 - [ ] Server file management functions (user identify by nickname, questions and answers, ...)
@@ -39,17 +57,3 @@ Client:
 	- Main thread (most probably everything except receive)
 	- Receive thread
 
-
-Priority tasks
-
-- [ ] Server setup routine - Theo
-- [ ] Server listener thread (listen for incoming connections from clients) - Amalia
-- [ ] Server client handler thread (unique thread for each connected client) - Dorian
-- [ ] Client communication (recieve)
-- [ ] Server client transmission (data transmission) - Vlad
-
-
-- [ ] Client initialization routine - Theo
-- [ ] Client connect to server routine - Amalia
-- [ ] Client recieve thread (server -> client) - Dorian
-- [ ] Client transmission function (client -> server) - Vlad
