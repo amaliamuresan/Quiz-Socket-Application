@@ -14,16 +14,16 @@ Server:
 - [ ] Optional Client status check thread
 	- if a client stopped responding or failed the conenction, we cand disconnect it
 
-Server threads: 
-	-Main thread (file management + client transmission) (can be broken down in 2 threads)
-	-Listener thread -> will start a handler thread after an incoming connection
-	-Unique client handler thread for each connected client
-	-Optional Client status check thread
+- Server threads: 
+	- Main thread (file management + client transmission) (can be broken down in 2 threads)
+	- Listener thread -> will start a handler thread after an incoming connection
+	- Unique client handler thread for each connected client
+	- Optional Client status check thread
 
 Client:
 - [ ] Client initialization routine
 - [ ] Client connect to server routine
-- [ ] Client recieve thread (server -> client)
+- [ ] Client receive thread (server -> client)
 - [ ] Client transmission function (client -> server)
 - [ ] Client set nickname
 - [ ] Client question list menu
@@ -35,9 +35,9 @@ Client:
 	- Using keyword "Exit"
 	- After disconnect from server, program ends, ? console will close
 
-Client threads:
-	-Main thread (most probably everything except receive)
-	-Receive thread
+- Client threads:
+	- Main thread (most probably everything except receive)
+	- Receive thread
 
 
 Priority tasks
