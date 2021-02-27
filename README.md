@@ -3,7 +3,7 @@
 
 ### Priority tasks
 
-- [ ] Server setup routine - Theo
+- [X] Server setup routine - Theo
 - [ ] Server listener thread (listen for incoming connections from clients) - Amalia
 - [ ] Server client handler thread (unique thread for each connected client) - Dorian
 	- [ ] Client communication (receive)
