@@ -44,6 +44,10 @@ int main()
     send(client_socket , hello , strlen(hello) , 0 ); 
     printf("Hello message sent\n");  
     //end test
+
+    close(client_socket);
+    close(server_socket);
+
     return 0;
 }
 
@@ -52,12 +56,19 @@ int main()
 void server_init(int *serverfd, struct sockaddr_in address)
 {
 
+    int option = 1; // option active for sockopt
 
     // SOCK_STREAM - for TCP/IP connexion type
     *serverfd = socket(AF_INET, SOCK_STREAM, 0);
     if(*serverfd < 0)
     {
         perror("Error while creating socket");
+        exit(1);
+    }
+
+    if (setsockopt(*serverfd, SOL_SOCKET, SO_REUSEADDR , &option, sizeof(option))) 
+    {
+        perror("Error while setting socket options");
         exit(1);
     }
 

@@ -4,13 +4,13 @@
 ### Priority tasks
 
 - [X] Server setup routine - Theo
-- [ ] Server listener thread (listen for incoming connections from clients) - Amalia
+- [ ] Server listener thread (listen for incoming connections from clients) - Theo
 - [ ] Server client handler thread (unique thread for each connected client) - Dorian
 	- [ ] Client communication (receive)
 - [ ] Server client transmission (data transmission) - Vlad
 
 
-- [ ] Client initialization routine - Theo
+- [ ] Client initialization routine - Amalia
 - [ ] Client connect to server routine - Amalia
 - [ ] Client receive thread (server -> client) - Dorian
 - [ ] Client transmission function (client -> server) - Vlad
