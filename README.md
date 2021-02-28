@@ -1,6 +1,11 @@
 # Quiz-Socket-Application
 ## Simple console based quiz aplication made in C using BCD sockets.
 
+How to run the server:
+Navigate to Server folder
+compile server.c using: gcc -pthread -o server server.c
+run program using: ./server
+
 ### Priority tasks
 
 - [X] Server setup routine - Theo
