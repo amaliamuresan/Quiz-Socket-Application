@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define PORT 11000
+#define PORT 11210
 #define BACKLOG_MAX_REQUESTS 10 //maximum number of requests to be put in connection queue
 
 
