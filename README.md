@@ -10,8 +10,8 @@
 - [ ] Server client transmission (data transmission) - Vlad
 
 
-- [ ] Client initialization routine - Amalia
-- [ ] Client connect to server routine - Amalia
+- [X] Client initialization routine - Amalia
+- [X] Client connect to server routine - Amalia
 - [ ] Client receive thread (server -> client) - Dorian
 - [ ] Client transmission function (client -> server) - Vlad
 
