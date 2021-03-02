@@ -62,13 +62,13 @@ char* getQuestion(char* fileName, int questionNr)
     char* question;
     FILE *file;
 
+    file = fopen(fileName, "r");
+    
     if(file == NULL)
     {
         perror("Error while opening the questions' file");
         exit(1);
     }
-
-    file = fopen(fileName, "r");
 
     question = (char*)malloc(sizeof(MAX_LENGTH));
 
