@@ -30,7 +30,7 @@ void writeQuestion(int questionNr, char* answer, char* nickname)
 int main()
 {
     writeQuestion(1, "I dont know", "Jon");
-    writeQuestion(1, "A variable", "Ana");
+    writeQuestion(2, "A variable", "Ana");
 
     return 0;
 }
