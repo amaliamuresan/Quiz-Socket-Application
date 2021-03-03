@@ -20,7 +20,7 @@ struct sockaddr_in address;
 pthread_t server_listener_thread;
 pthread_t client_handler_threads[1000];
 int client_sockets[1000];
-
+int clientsnrtosend;
 
 int main()
 {
@@ -93,12 +93,12 @@ void server_init(int *serverfd, struct sockaddr_in address)
 void *server_listener(void *argfd)
 {
     int serverfd = *((int*) argfd);
+    int clientsnr=0;
     while(true)
     {
         printf("Waiting for client to connect\n");
         int client_socket,read_value;
         int addrlen = sizeof(address);
-        int clientsnr=0;
         char buffer[1024] = {0}; 
         char *hello = "Hello from server"; 
 
@@ -112,7 +112,8 @@ void *server_listener(void *argfd)
             Client handler thread should be created here, using the client_socket as an argument
             Also, the thread must be saved in an array
         */
-       if(pthread_create(&client_handler_threads[clientsnr],NULL,client_handler,(void *)&client_sockets[clientsnr]))
+       clientsnrtosend=clientsnr;
+       if(pthread_create(&client_handler_threads[clientsnr],NULL,client_handler,(void *)&clientsnrtosend))
        {
            perror("Client handler thread creation error");
            exit(1);
@@ -140,13 +141,14 @@ void *server_listener(void *argfd)
 void *client_handler(void *arg)
 {
     int *client_sockp=(int *)arg;
-    int client_sock=*client_sockp;
+    int clientnr=*client_sockp;
+    int client_sock=client_sockets[clientnr];
     int charsread;
     char buf[1024] = {0}; 
     char exitstr[10]="exit";
     //sending stuff for testing
     char hello[100]; 
-    sprintf(hello,"Hello from server, Client socket nr %d",client_sock);
+    sprintf(hello,"Hello from server, Client socket nr %d, Client NR %d",client_sock,clientnr);
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 );
@@ -159,7 +161,7 @@ void *client_handler(void *arg)
         printf("READ: %s\n",buf);
         if(strcmp(buf,exitstr)==0)
         {
-            printf("CLOSED THREAD for client socket nr %d\n",client_sock);
+            printf("CLOSED THREAD for client socket nr %d, Client NR %d\n",client_sock,clientnr);
             close(client_sock);
             pthread_exit(0);
         }
