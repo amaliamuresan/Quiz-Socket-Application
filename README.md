@@ -23,11 +23,11 @@
 
 
 ### Server:
-- [ ] Server setup routine
-- [ ] Server file management functions (user identify by nickname, questions and answers, ...)
-	- [ ] Read from files
-	- [ ] Modify files (eg: a client answers a question, and his answer is saved)
-- [ ] Server listener thread (listen for incoming connections from clients)
+- [X] Server setup routine
+- [X] Server file management functions (user identify by nickname, questions and answers, ...)
+	- [X] Read from files
+	- [X] Modify files (eg: a client answers a question, and his answer is saved)
+- [X] Server listener thread (listen for incoming connections from clients)
 - [ ] Server client handler thread (unique thread for each connected client)
 	- [ ] Client identification (eg: nickname -> client socket)
 	- [ ] Client communication (recieve)
@@ -44,8 +44,8 @@
 	- Optional Client status check thread
 
 ### Client:
-- [ ] Client initialization routine
-- [ ] Client connect to server routine
+- [X] Client initialization routine
+- [X] Client connect to server routine
 - [ ] Client receive thread (server -> client)
 - [ ] Client transmission function (client -> server)
 - [ ] Client set nickname
