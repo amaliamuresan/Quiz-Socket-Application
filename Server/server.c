@@ -34,12 +34,10 @@ int main()
         fprintf(stderr, "Listener thread error\n");
     }
 
-    printf("AAA\n");
     if(pthread_join(server_listener_thread, NULL))
     {
         fprintf(stderr, "Listener thread join error\n");
     }
-    printf("BBB\n");
     /* 
         Client handler threads should be joined here as a precaution.
         If the threads are not closed at this point, something went wrong. 
@@ -152,6 +150,11 @@ void *client_handler(void *arg)
     printf("Hello message sent\n");  
 
     close(client_sock);*/
+    char *hello = "Hello from server"; 
+    send(client_sock , hello , strlen(hello) , 0 ); 
+    send(client_sock , hello , strlen(hello) , 0 ); 
+    send(client_sock , hello , strlen(hello) , 0 ); 
+    printf("Hello message sent\n");  
     while(true)
     {
         charsread=read(client_sock,buf,1024);
@@ -160,6 +163,7 @@ void *client_handler(void *arg)
         if(strcmp(buf,exitstr)==0)
         {
             printf("CLOSED THREAD\n");
+            close(client_sock);
             pthread_exit(0);
         }
     }
