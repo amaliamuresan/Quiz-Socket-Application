@@ -5,18 +5,16 @@
 #include<string.h>
 #include<arpa/inet.h>
 
-#define CLIENT_PORT 11210
-#define CLIENT_ADDRESS "127.0.0.1"
-
+#define SERVER_PORT 11210
 
 int main()
 {
     int clientFd;
     struct sockaddr_in address;
     address.sin_family = AF_INET;
-    address.sin_port = htons(CLIENT_PORT);
+    address.sin_port = htons(SERVER_PORT);
     char buffer[1024] = {0};
-    address.sin_addr.s_addr = inet_addr(CLIENT_ADDRESS);
+    address.sin_addr.s_addr = INADDR_ANY;
 
     if((clientFd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
