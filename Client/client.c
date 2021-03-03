@@ -47,17 +47,19 @@ int main()
         perror("Client receive thread creation error");
         exit(1);
     }
+    //testing
     strcpy(scanned,"aefaefae");
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"38qfabb39");
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"G$G44wwg");
     send(clientFd,scanned,strlen(scanned),0);
-    /*strcpy(scanned,"exit");
+    scanf("%s",scanned);//supposed to enter "exit"
     send(clientFd,scanned,strlen(scanned),0);
     printf("CLOSED CLIENT\n");
     close(clientFd);
-    exit(0);*/
+    exit(0);
+    //testing
     if(pthread_join(client_receive_thread,NULL))
     {
         perror("Client receive thread join error");

@@ -159,7 +159,7 @@ void *client_handler(void *arg)
         printf("READ: %s\n",buf);
         if(strcmp(buf,exitstr)==0)
         {
-            printf("CLOSED THREAD\n");
+            printf("CLOSED THREAD for client socket nr %d\n",client_sock);
             close(client_sock);
             pthread_exit(0);
         }
