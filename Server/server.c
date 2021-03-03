@@ -18,7 +18,9 @@ void *client_handler(void *arg);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
-pthread_t client_handler_thread;
+pthread_t client_handler_threads[1000];
+int client_sockets[1000];
+
 
 int main()
 {
@@ -96,6 +98,7 @@ void *server_listener(void *argfd)
         printf("Waiting for client to connect\n");
         int client_socket,read_value;
         int addrlen = sizeof(address);
+        int clientsnr=0;
         char buffer[1024] = {0}; 
         char *hello = "Hello from server"; 
 
@@ -104,19 +107,22 @@ void *server_listener(void *argfd)
             perror("accept"); 
             exit(1); 
         }
-
+        client_sockets[clientsnr]=client_socket;
         /* 
             Client handler thread should be created here, using the client_socket as an argument
             Also, the thread must be saved in an array
         */
-       if(pthread_create(&client_handler_thread,NULL,client_handler,(void *)&client_socket))
+       if(pthread_create(&client_handler_threads[clientsnr],NULL,client_handler,(void *)&client_sockets[clientsnr]))
        {
            perror("Client handler thread creation error");
+           exit(1);
        }
-       if(pthread_detach(client_handler_thread))
+       if(pthread_detach(client_handler_threads[clientsnr]))
        {
            perror("Client handler thread detaching error");
+           exit(1);
        }
+       clientsnr++;
         /* Test feature until client handler is implemented */
         /*printf("Client connected\n");
 
@@ -138,22 +144,13 @@ void *client_handler(void *arg)
     int charsread;
     char buf[1024] = {0}; 
     char exitstr[10]="exit";
-    /*int read_value;
-    int addrlen = sizeof(address);
-    char buffer[1024] = {0}; 
-    char *hello = "Hello from server"; 
-    printf("Client connected\n");
-
-    read_value = read(client_sock , buffer, 1024); 
-    printf("%s\n",buffer ); 
-    send(client_sock , hello , strlen(hello) , 0 ); 
-    printf("Hello message sent\n");  
-
-    close(client_sock);*/
-    char *hello = "Hello from server"; 
+    //sending stuff for testing
+    char hello[100]; 
+    sprintf(hello,"Hello from server, Client socket nr %d",client_sock);
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
-    send(client_sock , hello , strlen(hello) , 0 ); 
+    send(client_sock , hello , strlen(hello) , 0 );
+    //testing end 
     printf("Hello message sent\n");  
     while(true)
     {
@@ -165,6 +162,11 @@ void *client_handler(void *arg)
             printf("CLOSED THREAD\n");
             close(client_sock);
             pthread_exit(0);
+        }
+        if(charsread<0)
+        {
+            perror("Read error in client_handler");
+            pthread_exit(NULL);
         }
     }
 }

@@ -45,24 +45,25 @@ int main()
     if(pthread_create(&client_receive_thread,NULL,client_receive,(void *)&clientFd))
     {
         perror("Client receive thread creation error");
+        exit(1);
     }
-    while(true)
-    {
-        printf("What to send:");
-        scanf("%s",scanned);
-        printf("\n");
-        send(clientFd,scanned,strlen(scanned),0);
-        if(strcmp(scanned,exitstr)==0)
-        {
-            printf("CLOSED CLIENT\n");
-            exit(0);
-        }
-    }
+    strcpy(scanned,"aefaefae");
+    send(clientFd,scanned,strlen(scanned),0);
+    strcpy(scanned,"38qfabb39");
+    send(clientFd,scanned,strlen(scanned),0);
+    strcpy(scanned,"G$G44wwg");
+    send(clientFd,scanned,strlen(scanned),0);
+    /*strcpy(scanned,"exit");
+    send(clientFd,scanned,strlen(scanned),0);
+    printf("CLOSED CLIENT\n");
+    close(clientFd);
+    exit(0);*/
     if(pthread_join(client_receive_thread,NULL))
     {
         perror("Client receive thread join error");
+        exit(1);
     }
-    close(clientFd);
+    
 
 }
 void *client_receive(void *arg)
