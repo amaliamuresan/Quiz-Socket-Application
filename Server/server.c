@@ -14,10 +14,11 @@
 
 void server_init(int *server_fd, struct sockaddr_in address);
 void *server_listener(void *argfd);
+void *client_handler(void *arg);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
-
+pthread_t client_handler_thread;
 
 int main()
 {
@@ -33,16 +34,17 @@ int main()
         fprintf(stderr, "Listener thread error\n");
     }
 
-
+    printf("AAA\n");
     if(pthread_join(server_listener_thread, NULL))
     {
         fprintf(stderr, "Listener thread join error\n");
     }
-
+    printf("BBB\n");
     /* 
         Client handler threads should be joined here as a precaution.
         If the threads are not closed at this point, something went wrong. 
     */
+   
     
     close(server_socket);
 
@@ -94,7 +96,7 @@ void *server_listener(void *argfd)
     while(true)
     {
         printf("Waiting for client to connect\n");
-        int client_socket, read_value;
+        int client_socket,read_value;
         int addrlen = sizeof(address);
         char buffer[1024] = {0}; 
         char *hello = "Hello from server"; 
@@ -109,18 +111,56 @@ void *server_listener(void *argfd)
             Client handler thread should be created here, using the client_socket as an argument
             Also, the thread must be saved in an array
         */
-
+       if(pthread_create(&client_handler_thread,NULL,client_handler,(void *)&client_socket))
+       {
+           perror("Client handler thread creation error");
+       }
+       if(pthread_detach(client_handler_thread))
+       {
+           perror("Client handler thread detaching error");
+       }
         /* Test feature until client handler is implemented */
-        printf("Client connected\n");
+        /*printf("Client connected\n");
 
         read_value = read(client_socket , buffer, 1024); 
         printf("%s\n",buffer ); 
         send(client_socket , hello , strlen(hello) , 0 ); 
         printf("Hello message sent\n");  
 
-        close(client_socket);
+        close(client_socket);*/
 
         /* End test */
     }
 
+}
+void *client_handler(void *arg)
+{
+    int *client_sockp=(int *)arg;
+    int client_sock=*client_sockp;
+    int charsread;
+    char buf[1024] = {0}; 
+    char exitstr[10]="exit";
+    /*int read_value;
+    int addrlen = sizeof(address);
+    char buffer[1024] = {0}; 
+    char *hello = "Hello from server"; 
+    printf("Client connected\n");
+
+    read_value = read(client_sock , buffer, 1024); 
+    printf("%s\n",buffer ); 
+    send(client_sock , hello , strlen(hello) , 0 ); 
+    printf("Hello message sent\n");  
+
+    close(client_sock);*/
+    while(true)
+    {
+        charsread=read(client_sock,buf,1024);
+        buf[charsread]='\0';
+        printf("READ: %s\n",buf);
+        if(strcmp(buf,exitstr)==0)
+        {
+            printf("CLOSED THREAD\n");
+            pthread_exit(0);
+        }
+    }
 }
