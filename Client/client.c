@@ -15,6 +15,17 @@ void *client_receive(void *arg);
 
 pthread_t client_receive_thread;
 
+//protocol define
+    //protocol version
+    char protocol_identifier[16]="protocolv1.2021";
+    //possible keywords
+    char protocol_key_exit[5]="exit";
+    char protocol_key_nickname[9]="nickname";
+    /* USAGE:
+        protocol_identifier+"-"+key_something+":"+data;
+    */
+//protocol define
+
 int main()
 {
     int clientFd;
@@ -48,14 +59,19 @@ int main()
         exit(1);
     }
     //testing
-    strcpy(scanned,"aefaefae");
-    send(clientFd,scanned,strlen(scanned),0);
+    char mes[1000];
+    scanf("%s",scanned);
+    strcpy(mes,"protocolv1.2021-nickname:");
+    strcat(mes,scanned);
+    strcat(mes,";");
+    send(clientFd,mes,strlen(mes),0);
     strcpy(scanned,"38qfabb39");
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"G$G44wwg");
     send(clientFd,scanned,strlen(scanned),0);
     scanf("%s",scanned);//supposed to enter "exit"
-    send(clientFd,scanned,strlen(scanned),0);
+    strcpy(mes,"protocolv1.2021-exit:;");
+    send(clientFd,mes,strlen(mes),0);
     printf("CLOSED CLIENT\n");
     close(clientFd);
     exit(0);
