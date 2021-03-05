@@ -10,7 +10,10 @@
 
 #define SERVER_PORT 11210
 #define true 1
+#define false 0
 
+int checkProtocolKey(char *message,char *key);
+int extract_data_from_message(char *message,char *key);
 void *client_receive(void *arg);
 
 pthread_t client_receive_thread;
@@ -20,6 +23,10 @@ pthread_t client_receive_thread;
     char protocol_identifier[16]="protocolv1.2021";
     //possible keywords
     char protocol_key_exit[5]="exit";
+    char protocol_key_error[6]="error";
+    /*data interpretation:
+        nicknameNOTunique -> Nickname is not unique
+    */
     char protocol_key_nickname[9]="nickname";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
@@ -84,9 +91,58 @@ int main()
     
 
 }
+int checkProtocolKey(char *message,char *key)
+{
+    int i,pos,ok;
+    ok=true;
+    for(i=0;i<strlen(protocol_identifier) && ok==true;i++)
+    {
+        if(message[i]!=protocol_identifier[i])
+        {
+            ok=false;
+        }
+    }
+    pos=i;
+    if(message[pos]!='-' && ok==true)
+    {
+        ok=false;
+    }
+    pos++;
+    for(i=0;i<strlen(key) && ok==true;i++)
+    {
+        if(message[pos+i]!=key[i])
+        {
+            ok=false;
+        }
+    }
+    pos+=i;
+    if(message[pos]!=':' && ok==true)
+    {
+        ok=false;
+    }
+    return ok;
+}
+int extract_data_from_message(char *message,char *key)
+{
+    char *str=message+(strlen(protocol_identifier)+1+strlen(key)+1);
+    char str2[100];
+    int i=0;
+    while(str[i]!=';' && i<strlen(str))
+    {
+        str2[i]=str[i];
+        i++;
+    }
+    strcpy(message,str2);
+    if(str[i]==';')
+    {
+        return true;
+    }
+    return false;
+}
 void *client_receive(void *arg)
 {
     char buf[1025] = {0};
+    char procMessage[1025];
     int readqt;
     int *clientfdp=(int *)arg;
     int clientfd=*clientfdp;
@@ -95,6 +151,18 @@ void *client_receive(void *arg)
         readqt=read(clientfd, buf, 1024);
         buf[readqt]='\0';
         printf("READ:%s\n", buf);
+        if(checkProtocolKey(buf,protocol_key_error))
+        {
+            strcpy(procMessage,buf);
+            if(extract_data_from_message(procMessage,protocol_key_error))
+            {
+                if(strcmp(procMessage,"nicknameNOTunique")==0)
+                {
+                    //restart nickname request
+                    printf("NICKNAME NOT UNIQUE\n");
+                }
+            }
+        }
         if(readqt<0)
         {
             perror("Read error in client_receive");

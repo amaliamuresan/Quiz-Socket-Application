@@ -11,6 +11,7 @@
 #define BACKLOG_MAX_REQUESTS 10 //maximum number of requests to be put in connection queue
 #define true 1
 #define false 0
+#define CLIENTS_ARRAY_SIZE 1000
 
 int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
@@ -23,16 +24,22 @@ pthread_t server_listener_thread;
 typedef struct {
     pthread_t client_handler_thread;
     int client_socket;
+    int allocated;
     char nickname[100];
 } client_data;
-client_data clients_connected[1000];
+client_data clients_connected[CLIENTS_ARRAY_SIZE];
 
 int clientsnrtosend;
+
 //protocol define
     //protocol version
     char protocol_identifier[16]="protocolv1.2021";
     //possible keywords
     char protocol_key_exit[5]="exit";
+    char protocol_key_error[6]="error";
+    /*data interpretation:
+        nicknameNOTunique -> Nickname is not unique
+    */
     char protocol_key_nickname[9]="nickname";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
@@ -73,7 +80,7 @@ void server_init(int *serverfd, struct sockaddr_in address)
 {
 
     int option = 1; // option active for sockopt
-
+    int i;
     // SOCK_STREAM - for TCP/IP connection type
     *serverfd = socket(AF_INET, SOCK_STREAM, 0);
     if(*serverfd < 0)
@@ -101,7 +108,13 @@ void server_init(int *serverfd, struct sockaddr_in address)
         exit(1);
     }
 
+    for(i=0;i<CLIENTS_ARRAY_SIZE;i++)
+    {
+        clients_connected[i].allocated=false;
+    }
+
     printf("Server started!\n");
+    
     
 }
 
@@ -124,6 +137,7 @@ void *server_listener(void *argfd)
             exit(1); 
         }
         clients_connected[clientsnr].client_socket=client_socket;
+        clients_connected[clientsnr].allocated=true;
         /* 
             Client handler thread should be created here, using the client_socket as an argument
             Also, the thread must be saved in an array
@@ -202,6 +216,21 @@ int extract_data_from_message(char *message,char *key)
     }
     return false;
 }
+int check_unique_username(char *name)
+{
+    int i=0,ok=true;
+    for(i=0;i<CLIENTS_ARRAY_SIZE && ok==true;i++)
+    {
+        if(clients_connected[i].allocated)
+        {
+            if(strcmp(name,clients_connected[i].nickname)==0)
+            {
+                ok=false;
+            }
+        }
+    }
+    return ok;
+}
 void *client_handler(void *arg)
 {
     int *client_sockp=(int *)arg;
@@ -211,7 +240,8 @@ void *client_handler(void *arg)
     char buf[1025] = {0}; 
     char procMessage[1025];
     //sending stuff for testing
-    char hello[100]; 
+    char hello[100];
+    char mes[1000]; // 
     sprintf(hello,"Hello from server, Client socket nr %d, Client NR %d",client_sock,clientnr);
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
@@ -229,13 +259,22 @@ void *client_handler(void *arg)
             strcpy(procMessage,buf);
             if(extract_data_from_message(procMessage,protocol_key_nickname))
             {
-                strcpy(clients_connected[clientnr].nickname,procMessage);
-                printf("NICKNAME:%s\n",clients_connected[clientnr].nickname);
+                if(check_unique_username(procMessage))
+                {
+                    strcpy(clients_connected[clientnr].nickname,procMessage);
+                    printf("NICKNAME:%s\n",clients_connected[clientnr].nickname);
+                }
+                else
+                {
+                    printf("NICKNAME NOT UNIQUE ERROR\n");
+                    //send nickname error to client
+                }
             }
         }
         if(checkProtocolKey(buf,protocol_key_exit))
         {
             printf("CLOSED THREAD for client socket nr %d, Client NR %d\n",client_sock,clientnr);
+            clients_connected[clientnr].allocated=false;
             close(client_sock);
             pthread_exit(0);
         }
