@@ -15,7 +15,7 @@
 int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
 void *client_receive(void *arg);
-void *send_to_server(void *arg,int socket);
+void send_to_server(char * message,int socket);
 
 pthread_t client_receive_thread;
 
@@ -77,7 +77,7 @@ int main()
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"G$G44wwg");
     send(clientFd,scanned,strlen(scanned),0);
-    send_to_server("\nceva\n",clientFd);
+    send_to_server("\naltceva\n",clientFd);
     scanf("%s",scanned);//supposed to enter "exit"
     strcpy(mes,"protocolv1.2021-exit:;");
     send(clientFd,mes,strlen(mes),0);
@@ -172,10 +172,8 @@ void *client_receive(void *arg)
         }
     }
 }
-
-void *send_to_server(void * arg,int socket){
-    char* str=(char*)arg;
-    send(socket,str,strlen(str),0);
+void send_to_server(char * message,int socket){
+    send(socket,message,strlen(message),0);
 }
 
 
