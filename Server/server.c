@@ -15,6 +15,7 @@
 void server_init(int *server_fd, struct sockaddr_in address);
 void *server_listener(void *argfd);
 void *client_handler(void *arg);
+void send_to_client(char *message,int socket);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
@@ -152,6 +153,7 @@ void *client_handler(void *arg)
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 );
+    send_to_client("testing text",client_sock);
     //testing end 
     printf("Hello message sent\n");  
     while(true)
@@ -171,4 +173,7 @@ void *client_handler(void *arg)
             pthread_exit(NULL);
         }
     }
+}
+void send_to_client(char *message,int socket){
+    send(socket,message,strlen(message),0);
 }
