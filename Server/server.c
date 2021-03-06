@@ -23,6 +23,7 @@ void *server_listener(void *argfd);
 void *client_handler(void *arg);
 void send_to_client(char *message,int socket);
 void send_from_file(char* fileName,int socket);
+void protocol_send(char *message, char *keyword, int socket);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
@@ -46,6 +47,9 @@ int clientsnrtosend;
         nicknameNOTunique -> Nickname is not unique
     */
     char protocol_key_nickname[9]="nickname";
+    char protocol_key_nicknameSuccess[]="nicknameSuccess";
+    char protocol_key_getQuestions[]="getQuestions";
+    char protocol_key_display_data[]="displayData";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
     */
@@ -269,22 +273,32 @@ void *client_handler(void *arg)
                 if(check_unique_username(procMessage))
                 {
                     strcpy(clients_connected[clientnr].nickname,procMessage);
+                    protocol_send("Success", protocol_key_nicknameSuccess, client_sock);
                     printf("NICKNAME:%s\n",clients_connected[clientnr].nickname);
                 }
                 else
                 {
                     printf("NICKNAME NOT UNIQUE ERROR\n");
+                    protocol_send("nicknameNOTunique", protocol_key_error, client_sock);
                     //send nickname error to client
                 }
             }
         }
-        if(checkProtocolKey(buf,protocol_key_exit))
+
+        if(checkProtocolKey(buf,protocol_key_getQuestions))
+        {
+            printf("Sending queesstions\n");
+            send_from_file("questions",client_sock);
+        }
+
+        if(checkProtocolKey(buf,protocol_key_exit) || strlen(buf) == 0)
         {
             printf("CLOSED THREAD for client socket nr %d, Client NR %d\n",client_sock,clientnr);
             clients_connected[clientnr].allocated=false;
             close(client_sock);
             pthread_exit(0);
         }
+        
         if(charsread<0)
         {
             perror("Read error in client_handler");
@@ -292,6 +306,18 @@ void *client_handler(void *arg)
         }
     }
 }
+
+void protocol_send(char *message, char *keyword, int socket)
+{
+    char message_to_send[1000];
+    strcpy(message_to_send, "protocolv1.2021-");
+    strcat(message_to_send, keyword);
+    strcat(message_to_send,":");
+    strcat(message_to_send,message);
+    strcat(message_to_send,";");
+    send_to_client(message_to_send, socket);
+}
+
 void send_to_client(char *message,int socket)
 {
 //  messageToSend=encode();
@@ -330,8 +356,8 @@ void send_from_file(char* fileName,int socket)
             perror("Error reallocating the memory");
             exit(1);
         }
-
-        send_to_client(line,socket);
+            printf("%s\n",line);
+        protocol_send(line,protocol_key_display_data,socket);
     }
    
 }

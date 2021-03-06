@@ -16,8 +16,14 @@ int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
 void *client_receive(void *arg);
 void send_to_server(char * message,int socket);
+void protocol_send(char *message, char *keyword, int socket);
 
 pthread_t client_receive_thread;
+int nickname_set = 0;
+char nickname[100];
+
+
+char nickname_message[50] = "Enter nickname!";
 
 //protocol define
     //protocol version
@@ -29,6 +35,9 @@ pthread_t client_receive_thread;
         nicknameNOTunique -> Nickname is not unique
     */
     char protocol_key_nickname[9]="nickname";
+    char protocol_key_nicknameSuccess[]="nicknameSuccess";
+    char protocol_key_getQuestions[]="getQuestions";
+    char protocol_key_display_data[]="displayData";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
     */
@@ -36,6 +45,7 @@ pthread_t client_receive_thread;
 
 int main()
 {
+    
     int clientFd;
     struct sockaddr_in address;
     address.sin_family = AF_INET;
@@ -68,21 +78,28 @@ int main()
     }
     //testing
     char mes[1000];
-    scanf("%s",scanned);
-    strcpy(mes,"protocolv1.2021-nickname:");
-    strcat(mes,scanned);
-    strcat(mes,";");
-    send(clientFd,mes,strlen(mes),0);
-    strcpy(scanned,"38qfabb39");
-    send(clientFd,scanned,strlen(scanned),0);
-    strcpy(scanned,"G$G44wwg");
-    send(clientFd,scanned,strlen(scanned),0);
+
+    while(true)
+    {
+        if(!nickname_set)
+        {
+            printf("%s\n", nickname_message);
+            scanf("%s",scanned);
+            protocol_send(scanned, protocol_key_nickname, clientFd);
+            strcpy(nickname,scanned);
+            usleep(5000);
+        }
+    }
+
+    /*
     scanf("%s",scanned);//supposed to enter "exit"
     strcpy(mes,"protocolv1.2021-exit:;");
     send(clientFd,mes,strlen(mes),0);
     printf("CLOSED CLIENT\n");
     close(clientFd);
     exit(0);
+
+    */
     //testing
     if(pthread_join(client_receive_thread,NULL))
     {
@@ -92,6 +109,63 @@ int main()
     
 
 }
+
+void *client_receive(void *arg)
+{
+    char buf[1025] = {0};
+    char procMessage[1025];
+    int readqt;
+    int *clientfdp=(int *)arg;
+    int clientfd=*clientfdp;
+    while(true)
+    {
+        readqt=read(clientfd, buf, 1024);
+        buf[readqt]='\0';
+        
+        if(checkProtocolKey(buf,protocol_key_error))
+        {
+            //printf("READ:%s\n", buf);
+            strcpy(procMessage,buf);
+            //printf("MYPROC:%s\n",procMessage);
+            if(extract_data_from_message(procMessage,protocol_key_error))
+            {
+                
+                if(strcmp(procMessage,"nicknameNOTunique")==0)
+                {
+                    //restart nickname request
+                    strcpy(nickname_message,"Enter another nickname!");
+                    system("clear");
+                    //printf("%s\n",procMessage);
+                    printf("Nickname \"%s\" is already in use!\n", nickname);
+                }
+            }
+        }
+        if(checkProtocolKey(buf,protocol_key_nicknameSuccess))
+        {
+            nickname_set = 1;
+            system("clear");
+            printf("Welcome, %s!\n\n",nickname);
+            printf("Choose a question from this list:\n");
+            protocol_send("questions", protocol_key_getQuestions, clientfd);
+        }
+        if(checkProtocolKey(buf,protocol_key_display_data))
+        {
+            if(extract_data_from_message(procMessage,protocol_key_display_data))
+            {
+                printf("%s\n",procMessage);
+            }
+        }
+        if(readqt<0)
+        {
+            perror("Read error in client_receive");
+            pthread_exit(NULL);
+        }
+    }
+}
+
+
+
+
 int checkProtocolKey(char *message,char *key)
 {
     int i,pos,ok;
@@ -133,47 +207,27 @@ int extract_data_from_message(char *message,char *key)
         str2[i]=str[i];
         i++;
     }
+    str2[i]='\0';
     strcpy(message,str2);
+    //printf("MYPROC2:%s\n",message);
     if(str[i]==';')
     {
         return true;
     }
     return false;
 }
-void *client_receive(void *arg)
+
+void protocol_send(char *message, char *keyword, int socket)
 {
-    char buf[1025] = {0};
-    char procMessage[1025];
-    int readqt;
-    int *clientfdp=(int *)arg;
-    int clientfd=*clientfdp;
-    while(true)
-    {
-        readqt=read(clientfd, buf, 1024);
-        buf[readqt]='\0';
-        printf("READ:%s\n", buf);
-        if(checkProtocolKey(buf,protocol_key_error))
-        {
-            strcpy(procMessage,buf);
-            if(extract_data_from_message(procMessage,protocol_key_error))
-            {
-                if(strcmp(procMessage,"nicknameNOTunique")==0)
-                {
-                    //restart nickname request
-                    printf("NICKNAME NOT UNIQUE\n");
-                }
-            }
-        }
-        if(readqt<0)
-        {
-            perror("Read error in client_receive");
-            pthread_exit(NULL);
-        }
-    }
+    char message_to_send[1000];
+    strcpy(message_to_send, "protocolv1.2021-");
+    strcat(message_to_send, keyword);
+    strcat(message_to_send,":");
+    strcat(message_to_send,message);
+    strcat(message_to_send,";");
+    send_to_server(message_to_send, socket);
 }
+
 void send_to_server(char * message,int socket){
     send(socket,message,strlen(message),0);
 }
-
-
-
