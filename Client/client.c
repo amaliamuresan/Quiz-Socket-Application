@@ -12,6 +12,7 @@
 #define true 1
 
 void *client_receive(void *arg);
+void *send_to_server(void *arg,int socket);
 
 pthread_t client_receive_thread;
 
@@ -54,6 +55,7 @@ int main()
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"G$G44wwg");
     send(clientFd,scanned,strlen(scanned),0);
+    send_to_server("\nceva\n",clientFd);
     scanf("%s",scanned);//supposed to enter "exit"
     send(clientFd,scanned,strlen(scanned),0);
     printf("CLOSED CLIENT\n");
@@ -85,6 +87,11 @@ void *client_receive(void *arg)
             pthread_exit(NULL);
         }
     }
+}
+
+void *send_to_server(void * arg,int socket){
+    char* str=(char*)arg;
+    send(socket,str,strlen(str),0);
 }
 
 
