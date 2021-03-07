@@ -10,12 +10,14 @@
 #define PORT 11210
 #define BACKLOG_MAX_REQUESTS 10 //maximum number of requests to be put in connection queue
 #define true 1
-
+#define MAX_LENGTH 4096
 
 void server_init(int *server_fd, struct sockaddr_in address);
 void *server_listener(void *argfd);
 void *client_handler(void *arg);
 void send_to_client(char *message,int socket);
+void send_questions(char* fileName,int socket);
+void send_answers(int fileNumber,int socket);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
@@ -153,7 +155,8 @@ void *client_handler(void *arg)
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 );
-    send_to_client("testing text",client_sock);
+    send_questions("questions.txt",client_sock);
+    send_answers(1,client_sock);
     //testing end 
     printf("Hello message sent\n");  
     while(true)
@@ -174,6 +177,84 @@ void *client_handler(void *arg)
         }
     }
 }
-void send_to_client(char *message,int socket){
+void send_to_client(char *message,int socket)
+{
     send(socket,message,strlen(message),0);
+}
+void send_questions(char* fileName,int socket) //probabil nu e nevoie de 2 functii separate, poate fi o singura send_from_file
+{
+    char* questions;
+    char* location = (char*)malloc(64);
+    FILE *file;
+
+    strcpy(location,"../Files/");
+    strcat(location,fileName);
+    file = fopen(location, "r");
+
+    if(file == NULL)
+    {
+        perror("Error while opening the questions' file");
+        exit(1);
+    }
+
+    questions = (char*)malloc(sizeof(MAX_LENGTH));
+    if(questions == NULL)
+    {
+        perror("Error allocating the memory");
+        exit(1);
+    }
+
+    char line[1024];
+    while(fgets(line, MAX_LENGTH, file))
+    {
+        questions = (char*)realloc(questions, sizeof(questions) + MAX_LENGTH);
+        if(questions == NULL)
+        {
+            perror("Error reallocating the memory");
+            exit(1);
+        }
+
+        send_to_client(line,socket);
+    }
+   
+}
+void send_answers(int fileNumber,int socket) //functia primeste int daca este nevoie de asa ceva, dar send_questions poate fi facut sa trimita si raspunsurile
+{
+    char* answers;
+    char* fileName = (char*)malloc(255);
+    char* location = (char*)malloc(255);
+    FILE *file;
+
+    strcpy(location,"../Files/");
+    sprintf(fileName,"%d",fileNumber);
+    strcat(location,fileName);
+    strcat(location,".txt");
+    file = fopen(location, "r");
+
+    if(file == NULL)
+    {
+        perror("Error while opening the answers' file");
+        exit(1);
+    }
+
+    answers = (char*)malloc(sizeof(MAX_LENGTH));
+    if(answers == NULL)
+    {
+        perror("Error allocating the memory");
+        exit(1);
+    }
+
+    char line[1024];
+    while(fgets(line, MAX_LENGTH, file))
+    {
+        answers = (char*)realloc(answers, sizeof(answers) + MAX_LENGTH);
+        if(answers == NULL)
+        {
+            perror("Error reallocating the memory");
+            exit(1);
+        }
+
+        send_to_client(line,socket);
+    }
+   
 }

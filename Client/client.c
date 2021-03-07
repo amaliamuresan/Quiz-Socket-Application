@@ -55,7 +55,6 @@ int main()
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"G$G44wwg");
     send(clientFd,scanned,strlen(scanned),0);
-    send_to_server("\naltceva\n",clientFd);
     scanf("%s",scanned);//supposed to enter "exit"
     send(clientFd,scanned,strlen(scanned),0);
     printf("CLOSED CLIENT\n");
