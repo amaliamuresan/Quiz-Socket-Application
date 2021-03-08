@@ -23,6 +23,7 @@ void *server_listener(void *argfd);
 void *client_handler(void *arg);
 void send_to_client(char *message,int socket);
 void send_from_file(char* fileName,int socket);
+char* encode(char *mess,char *keyword);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
@@ -251,8 +252,7 @@ void *client_handler(void *arg)
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 );
-    send_from_file("questions",client_sock);
-    send_from_file("1",client_sock);
+    send_to_client(encode("text",protocol_key_nickname),client_sock);
     //testing end 
     printf("Hello message sent\n");
     
@@ -294,7 +294,8 @@ void *client_handler(void *arg)
 }
 void send_to_client(char *message,int socket)
 {
-//  messageToSend=encode();
+    //char *messageToSend;
+    //messageToSend=encode(message,keyword);
     send(socket,message,strlen(message),0);
 }
 void send_from_file(char* fileName,int socket)
@@ -334,4 +335,13 @@ void send_from_file(char* fileName,int socket)
         send_to_client(line,socket);
     }
    
+}
+char* encode(char *message,char *keyword)
+{
+    char* encodedMessage=(char*)malloc(sizeof(MAX_LENGTH));
+    strcpy(encodedMessage,protocol_identifier);
+    strcat(encodedMessage,"-");
+    strcat(encodedMessage,keyword);
+    strcat(encodedMessage,":");
+    strcat(encodedMessage,message);
 }

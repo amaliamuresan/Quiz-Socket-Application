@@ -11,11 +11,13 @@
 #define SERVER_PORT 11210
 #define true 1
 #define false 0
+#define MAX_LENGTH 4096
 
 int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
 void *client_receive(void *arg);
 void send_to_server(char * message,int socket);
+char* encode(char *message,char *keyword);
 
 pthread_t client_receive_thread;
 
@@ -172,8 +174,17 @@ void *client_receive(void *arg)
     }
 }
 void send_to_server(char * message,int socket){
+
     send(socket,message,strlen(message),0);
 }
-
+char* encode(char *message,char *keyword)
+{
+    char* encodedMessage=(char*)malloc(sizeof(MAX_LENGTH));
+    strcpy(encodedMessage,protocol_identifier);
+    strcat(encodedMessage,"-");
+    strcat(encodedMessage,keyword);
+    strcat(encodedMessage,":");
+    strcat(encodedMessage,message);
+}
 
 
