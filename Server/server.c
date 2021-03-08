@@ -294,7 +294,7 @@ void *client_handler(void *arg)
 }
 void send_to_client(char *message,int socket)
 {
-    //char *messageToSend;
+    //char *messageToSend=(char*)malloc(sizeof(MAX_LENGTH));;
     //messageToSend=encode(message,keyword);
     send(socket,message,strlen(message),0);
 }
@@ -344,4 +344,6 @@ char* encode(char *message,char *keyword)
     strcat(encodedMessage,keyword);
     strcat(encodedMessage,":");
     strcat(encodedMessage,message);
+    //strcat(encodedMessage,";");
+    return encodedMessage;
 }

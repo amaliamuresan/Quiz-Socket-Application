@@ -16,7 +16,7 @@
 int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
 void *client_receive(void *arg);
-void send_to_server(char * message,int socket);
+void send_to_server(char * message,char *keyword,int socket);
 char* encode(char *message,char *keyword);
 
 pthread_t client_receive_thread;
@@ -82,6 +82,8 @@ int main()
     scanf("%s",scanned);//supposed to enter "exit"
     strcpy(mes,"protocolv1.2021-exit:;");
     send(clientFd,mes,strlen(mes),0);
+    /*send_to_server(scanned,protocol_key_nickname,clientFd);
+    send_to_server("e",protocol_key_exit,clientFd);*/
     printf("CLOSED CLIENT\n");
     close(clientFd);
     exit(0);
@@ -173,9 +175,10 @@ void *client_receive(void *arg)
         }
     }
 }
-void send_to_server(char * message,int socket){
-
-    send(socket,message,strlen(message),0);
+void send_to_server(char * message,char *keyword,int socket){
+    char *messageToSend=(char*)malloc(sizeof(MAX_LENGTH));;
+    messageToSend=encode(message,keyword);
+    send(socket,messageToSend,strlen(messageToSend),0);
 }
 char* encode(char *message,char *keyword)
 {
@@ -185,6 +188,8 @@ char* encode(char *message,char *keyword)
     strcat(encodedMessage,keyword);
     strcat(encodedMessage,":");
     strcat(encodedMessage,message);
+    strcat(encodedMessage,";");
+    return encodedMessage;
 }
 
 
