@@ -11,7 +11,7 @@
 #define SERVER_PORT 11210
 #define true 1
 #define false 0
-#define MAX_LENGTH 4096
+#define MESS_LENGTH 1024
 
 int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
@@ -75,15 +75,15 @@ int main()
     strcat(mes,scanned);
     strcat(mes,";");
     send(clientFd,mes,strlen(mes),0);
-    strcpy(scanned,"38qfabb39");
+    /*strcpy(scanned,"38qfabb39");
     send(clientFd,scanned,strlen(scanned),0);
     strcpy(scanned,"G$G44wwg");
     send(clientFd,scanned,strlen(scanned),0);
-    scanf("%s",scanned);//supposed to enter "exit"
+    scanf("%s",scanned);//supposed to enter "exit"*/
     strcpy(mes,"protocolv1.2021-exit:;");
     send(clientFd,mes,strlen(mes),0);
-    /*send_to_server(scanned,protocol_key_nickname,clientFd);
-    send_to_server("e",protocol_key_exit,clientFd);*/
+    //send_to_server(scanned,protocol_key_nickname,clientFd);
+    //send_to_server("",protocol_key_exit,clientFd);
     printf("CLOSED CLIENT\n");
     close(clientFd);
     exit(0);
@@ -176,13 +176,13 @@ void *client_receive(void *arg)
     }
 }
 void send_to_server(char * message,char *keyword,int socket){
-    char *messageToSend=(char*)malloc(sizeof(MAX_LENGTH));;
+    char *messageToSend=(char*)malloc(sizeof(MESS_LENGTH));;
     messageToSend=encode(message,keyword);
     send(socket,messageToSend,strlen(messageToSend),0);
 }
 char* encode(char *message,char *keyword)
 {
-    char* encodedMessage=(char*)malloc(sizeof(MAX_LENGTH));
+    char* encodedMessage=(char*)malloc(sizeof(MESS_LENGTH));
     strcpy(encodedMessage,protocol_identifier);
     strcat(encodedMessage,"-");
     strcat(encodedMessage,keyword);

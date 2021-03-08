@@ -21,8 +21,8 @@ int extract_data_from_message(char *message,char *key);
 void server_init(int *server_fd, struct sockaddr_in address);
 void *server_listener(void *argfd);
 void *client_handler(void *arg);
-void send_to_client(char *message,int socket);
-void send_from_file(char* fileName,int socket);
+void send_to_client(char *message,char *keyword,int socket);
+void send_from_file(char* fileName,char *keyword,int socket);
 char* encode(char *mess,char *keyword);
 
 struct sockaddr_in address;
@@ -252,7 +252,7 @@ void *client_handler(void *arg)
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 ); 
     send(client_sock , hello , strlen(hello) , 0 );
-    send_to_client(encode("text",protocol_key_nickname),client_sock);
+    //send_to_client("\nTest for sending strings with keys",protocol_key_nickname,client_sock);
     //testing end 
     printf("Hello message sent\n");
     
@@ -292,13 +292,13 @@ void *client_handler(void *arg)
         }
     }
 }
-void send_to_client(char *message,int socket)
+void send_to_client(char *message,char *keyword,int socket)
 {
-    //char *messageToSend=(char*)malloc(sizeof(MAX_LENGTH));;
-    //messageToSend=encode(message,keyword);
+    char *messageToSend=(char*)malloc(sizeof(MAX_LENGTH));;
+    messageToSend=encode(message,keyword);
     send(socket,message,strlen(message),0);
 }
-void send_from_file(char* fileName,int socket)
+void send_from_file(char* fileName,char *keyword,int socket)
 {
     char* questions;
     char* location = (char*)malloc(64);
@@ -332,7 +332,7 @@ void send_from_file(char* fileName,int socket)
             exit(1);
         }
 
-        send_to_client(line,socket);
+        send_to_client(line,keyword,socket);
     }
    
 }
@@ -344,6 +344,6 @@ char* encode(char *message,char *keyword)
     strcat(encodedMessage,keyword);
     strcat(encodedMessage,":");
     strcat(encodedMessage,message);
-    //strcat(encodedMessage,";");
+    strcat(encodedMessage,";");
     return encodedMessage;
 }
