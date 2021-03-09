@@ -349,7 +349,9 @@ void *client_handler(void *arg)
             strcpy(procMessage, buf);
             if(extract_data_from_message(procMessage,protocol_key_get_answers))
             {
-                send_from_file_special(procMessage, client_sock, protocol_key_display_data);
+
+                send_from_file(procMessage, client_sock, protocol_key_display_data);
+                protocol_send("UniqueText", protocol_key_answers_back, client_sock);
                 //sleep(1);
             }
             
@@ -433,51 +435,7 @@ void send_from_file(char* fileName,int socket, char* keyword)
    
 }
 
-void send_from_file_special(char* fileName,int socket, char* keyword)
-{
-    char* questions;
-    char* location = (char*)malloc(64);
-    FILE *file;
 
-    strcpy(location,"../Files/");
-    strcat(location,fileName);
-    strcat(location,".txt");
-    file = fopen(location, "r");
-
-    if(file == NULL)
-    {
-        perror("Error while opening the questions' file");
-        exit(1);
-    }
-
-    questions = (char*)malloc(sizeof(MAX_LENGTH));
-    if(questions == NULL)
-    {
-        perror("Error allocating the memory");
-        exit(1);
-    }
-
-    char line[1024];
-    char *p;
-    while(fgets(line, MAX_LENGTH, file))
-    {
-        questions = (char*)realloc(questions, sizeof(questions) + MAX_LENGTH);
-        if(questions == NULL)
-        {
-            perror("Error reallocating the memory");
-            exit(1);
-        }
-        printf("%s\n",line);
-        p = strchr(line,'\n');
-        if(p != NULL)
-            strcpy(p,p+1);
-        protocol_send(line,keyword,socket);
-        usleep(5000);
-    }
-    protocol_send("Success", protocol_key_answers_back, socket);
-    fclose(file);
-   
-}
 
 int getLineNumber(char* line)
 {

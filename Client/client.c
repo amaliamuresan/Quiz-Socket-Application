@@ -104,7 +104,6 @@ int main()
             protocol_send(scanned, protocol_key_nickname, clientFd);
             strcpy(nickname,scanned);
             usleep(5000);
-            printf("HelloNop");
         }
         else if(state == 1)
         {
@@ -120,7 +119,6 @@ int main()
             getline(&ans, &size, stdin);
             ans[strlen(ans)-1]='\0';
             //printf("AM SCANAT: %s\n",ans);
-            
             strcpy(answer,nickname);
             strcat(answer,"\\");
             strcat(answer,ans);
@@ -130,7 +128,7 @@ int main()
         }
         else if(state == 3)
         {
-            sleep(1);
+            sleep(2);
             printf("Do you want to return?(Y): ");
             
         }
@@ -170,7 +168,7 @@ void *client_receive(void *arg)
     {
         readqt=read(clientfd, buf, 2048);
         buf[readqt]='\0';
-        printf("READ:%s\n", buf);
+        //printf("READ:%s\n", buf);
         if(checkProtocolKey(buf,protocol_key_error))
         {
             
@@ -238,18 +236,17 @@ void *client_receive(void *arg)
                 }
             }
         }
+
+        else if(checkProtocolKey(buf,protocol_key_question_answered))
+        {
+            printf("\nAnswers: \n"); 
+            protocol_send(selected_question,protocol_key_get_answers, clientfd);
+        }
         else if(checkProtocolKey(buf,protocol_key_answers_back))
         {
             printf("JERE");
             //state=3;
             //lock = 0;
-        }
-        else if(checkProtocolKey(buf,protocol_key_question_answered))
-        {
-            state=3;
-            lock=0;
-            printf("\nAnswers: \n"); 
-            protocol_send(selected_question,protocol_key_get_answers, clientfd);
         }
 
         if(readqt<0)
