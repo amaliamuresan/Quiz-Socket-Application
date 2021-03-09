@@ -22,7 +22,12 @@ void server_init(int *server_fd, struct sockaddr_in address);
 void *server_listener(void *argfd);
 void *client_handler(void *arg);
 void send_to_client(char *message,int socket);
-void send_from_file(char* fileName,int socket);
+void send_from_file(char* fileName,int socket, char *keyword);
+void protocol_send(char *message, char *keyword, int socket);
+void getQuestion(char* fileName, int questionNr, char *message);
+int getLineNumber(char* line);
+void writeQuestion(int questionNr, char* answer, char* nickname);
+void send_from_file_special(char* fileName,int socket, char* keyword);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
@@ -46,6 +51,15 @@ int clientsnrtosend;
         nicknameNOTunique -> Nickname is not unique
     */
     char protocol_key_nickname[9]="nickname";
+    char protocol_key_nicknameSuccess[]="nicknameSuccess";
+    char protocol_key_getQuestions[]="getQuestions";
+    char protocol_key_display_data[]="displayData";
+    char protocol_key_select_question[]="selectQuestion";
+    char protocol_key_getQuestions_success[]="getQuestionsSuccess";
+    char protocol_key_send_answer[]="sendAnswer";
+    char protocol_key_question_answered[]="questionAnswered";
+    char protocol_key_get_answers[]="answersGet";
+    char protocol_key_answers_back[]="123UniqueTest";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
     */
@@ -214,6 +228,7 @@ int extract_data_from_message(char *message,char *key)
         str2[i]=str[i];
         i++;
     }
+    str2[i]='\0';
     strcpy(message,str2);
     if(str[i]==';')
     {
@@ -242,23 +257,19 @@ void *client_handler(void *arg)
     int clientnr=*client_sockp;
     int client_sock=clients_connected[clientnr].client_socket;
     int charsread;
-    char buf[1025] = {0}; 
-    char procMessage[1025];
+    char buf[2048] = {0};
+    char q_number[5] = {0};
+    char procMessage[2048];
     //sending stuff for testing
     char hello[100];
     char mes[1000]; // 
     sprintf(hello,"Hello from server, Client socket nr %d, Client NR %d",client_sock,clientnr);
-    send(client_sock , hello , strlen(hello) , 0 ); 
-    send(client_sock , hello , strlen(hello) , 0 ); 
-    send(client_sock , hello , strlen(hello) , 0 );
-    send_from_file("questions",client_sock);
-    send_from_file("1",client_sock);
     //testing end 
     printf("Hello message sent\n");
     
     while(true)
     {
-        charsread=read(client_sock,buf,1024);
+        charsread=read(client_sock,buf,2048);
         buf[charsread]='\0';
         printf("READ: %s\n",buf);
         if(checkProtocolKey(buf,protocol_key_nickname))
@@ -269,22 +280,89 @@ void *client_handler(void *arg)
                 if(check_unique_username(procMessage))
                 {
                     strcpy(clients_connected[clientnr].nickname,procMessage);
+                    protocol_send("Success", protocol_key_nicknameSuccess, client_sock);
                     printf("NICKNAME:%s\n",clients_connected[clientnr].nickname);
                 }
                 else
                 {
                     printf("NICKNAME NOT UNIQUE ERROR\n");
+                    protocol_send("nicknameNOTunique", protocol_key_error, client_sock);
                     //send nickname error to client
                 }
             }
         }
-        if(checkProtocolKey(buf,protocol_key_exit))
+
+        else if(checkProtocolKey(buf,protocol_key_getQuestions))
+        {
+            printf("Sending queesstions\n");
+            send_from_file("questions",client_sock,protocol_key_display_data);
+            protocol_send("Success",protocol_key_getQuestions_success, client_sock);
+        }
+
+        else if(checkProtocolKey(buf, protocol_key_select_question))
+        {
+            strcpy(procMessage, buf);
+            if(extract_data_from_message(procMessage,protocol_key_select_question))
+            {
+                int question_number;
+                question_number = atoi(procMessage);
+                strcpy(q_number, procMessage);
+                getQuestion("questions",question_number,procMessage);
+                if(strcmp(procMessage,"Question not found") == 0)
+                {
+                    protocol_send("questionNotFound", protocol_key_error, client_sock);
+                }
+                else
+                {
+                    protocol_send("questionIncoming", protocol_key_select_question, client_sock);
+                    protocol_send(procMessage+3, protocol_key_display_data, client_sock);
+                    printf("Q nunmber %s\n",q_number);
+                    //send_from_file(q_number,client_sock,protocol_key_display_data);
+                    protocol_send("questionSent", protocol_key_select_question, client_sock);
+                }
+            }
+        }
+
+        else if(checkProtocolKey(buf, protocol_key_send_answer))
+        {
+            strcpy(procMessage, buf);
+            if(extract_data_from_message(procMessage,protocol_key_send_answer))
+            {
+                char nick[50];
+                char question[50];
+                char answer[2048];
+                printf("PROC:%s\n",procMessage);
+                char *token;
+                token = strtok(procMessage,"\\");
+                strcpy(nick,token);
+                token = strtok(NULL,"\\");
+                strcpy(answer,token);
+                token = strtok(NULL,"\\");
+                strcpy(question,token);
+                writeQuestion(atoi(question), answer, nick);
+                protocol_send("answered", protocol_key_question_answered, client_sock);
+            }
+        }
+
+        else if(checkProtocolKey(buf,protocol_key_get_answers))
+        {
+            strcpy(procMessage, buf);
+            if(extract_data_from_message(procMessage,protocol_key_get_answers))
+            {
+                send_from_file_special(procMessage, client_sock, protocol_key_display_data);
+                //sleep(1);
+            }
+            
+        }
+
+        else if(checkProtocolKey(buf,protocol_key_exit) || strlen(buf) == 0)
         {
             printf("CLOSED THREAD for client socket nr %d, Client NR %d\n",client_sock,clientnr);
             clients_connected[clientnr].allocated=false;
             close(client_sock);
             pthread_exit(0);
         }
+        
         if(charsread<0)
         {
             perror("Read error in client_handler");
@@ -292,12 +370,25 @@ void *client_handler(void *arg)
         }
     }
 }
+
+void protocol_send(char *message, char *keyword, int socket)
+{
+    char message_to_send[2048];
+    strcpy(message_to_send, "protocolv1.2021-");
+    strcat(message_to_send, keyword);
+    strcat(message_to_send,":");
+    strcat(message_to_send,message);
+    strcat(message_to_send,";");
+    send_to_client(message_to_send, socket);
+    usleep(5000);
+}
+
 void send_to_client(char *message,int socket)
 {
 //  messageToSend=encode();
     send(socket,message,strlen(message),0);
 }
-void send_from_file(char* fileName,int socket)
+void send_from_file(char* fileName,int socket, char* keyword)
 {
     char* questions;
     char* location = (char*)malloc(64);
@@ -322,6 +413,7 @@ void send_from_file(char* fileName,int socket)
     }
 
     char line[1024];
+    char *p;
     while(fgets(line, MAX_LENGTH, file))
     {
         questions = (char*)realloc(questions, sizeof(questions) + MAX_LENGTH);
@@ -330,8 +422,144 @@ void send_from_file(char* fileName,int socket)
             perror("Error reallocating the memory");
             exit(1);
         }
-
-        send_to_client(line,socket);
+        printf("%s\n",line);
+        p = strchr(line,'\n');
+        if(p != NULL)
+            strcpy(p,p+1);
+        protocol_send(line,keyword,socket);
+        usleep(5000);
     }
+    fclose(file);
    
+}
+
+void send_from_file_special(char* fileName,int socket, char* keyword)
+{
+    char* questions;
+    char* location = (char*)malloc(64);
+    FILE *file;
+
+    strcpy(location,"../Files/");
+    strcat(location,fileName);
+    strcat(location,".txt");
+    file = fopen(location, "r");
+
+    if(file == NULL)
+    {
+        perror("Error while opening the questions' file");
+        exit(1);
+    }
+
+    questions = (char*)malloc(sizeof(MAX_LENGTH));
+    if(questions == NULL)
+    {
+        perror("Error allocating the memory");
+        exit(1);
+    }
+
+    char line[1024];
+    char *p;
+    while(fgets(line, MAX_LENGTH, file))
+    {
+        questions = (char*)realloc(questions, sizeof(questions) + MAX_LENGTH);
+        if(questions == NULL)
+        {
+            perror("Error reallocating the memory");
+            exit(1);
+        }
+        printf("%s\n",line);
+        p = strchr(line,'\n');
+        if(p != NULL)
+            strcpy(p,p+1);
+        protocol_send(line,keyword,socket);
+        usleep(5000);
+    }
+    protocol_send("Success", protocol_key_answers_back, socket);
+    fclose(file);
+   
+}
+
+int getLineNumber(char* line)
+{
+    int rez = 0;
+    for(int i  = 0; i < strlen(line); i++)
+    {
+        if(line[i] < '0' || line[i] > '9')
+        {
+            break;
+        }
+        else
+        {
+            rez = rez*10 + (line[i] - '0');
+        }
+    }
+
+    return rez;
+}
+
+void getQuestion(char* fileName, int questionNr, char *message)
+{
+    char* question;
+    FILE *file;
+
+    char* location = (char*)malloc(64);
+
+    strcpy(location,"../Files/");
+    strcat(location,fileName);
+    strcat(location,".txt");
+    file = fopen(location, "r");
+    
+    if(file == NULL)
+    {
+        perror("Error while opening the questions' file");
+        exit(1);
+    }
+
+    question = (char*)malloc(sizeof(MAX_LENGTH));
+    strcpy(question,"");
+    char line[1024];
+    while(fgets(line, MAX_LENGTH, file))
+    {
+        if(getLineNumber(line) == questionNr)
+        {
+            strcpy(question, line);  
+            break;
+        }
+    }
+    if(strlen(question) == 0)
+        strcat(question, "Question not found");
+    else
+    {
+        char *p;
+        p = strchr(question,'\n');
+        if(p != NULL)
+            strcpy(p,p+1);
+    }
+    fclose(file);
+    strcpy(message, question);
+}
+
+void writeQuestion(int questionNr, char* answer, char* nickname)
+{
+    char fileName[15];
+    sprintf(fileName, "../Files/%d", questionNr);
+    strcat(fileName, ".txt");
+
+    FILE* file = fopen(fileName, "a");
+
+    if(file == NULL)
+    {
+        perror("Error while opening the file");
+        exit(1);
+    }
+
+    char* stringToWrite = (char *)malloc(strlen(answer) + strlen(nickname) + 4);
+    strcpy(stringToWrite, nickname);
+    strcat(stringToWrite, " : ");
+    strcat(stringToWrite, answer);
+    strcat(stringToWrite, "\n");
+    fputs(stringToWrite, file);
+    //printf("String: %s", stringToWrite);
+    fclose(file);
+    
 }

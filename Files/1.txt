@@ -1,1 +1,10 @@
 Jon : I dont know
+Client : O variabila primitiva
+Nick : Variabile primareTest : Yes
+Pol : No
+Now : Yes
+Nom : Yes
+Pul : No
+Lop : Yes
+Yes : Yes
+One : Yes
