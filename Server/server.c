@@ -26,6 +26,8 @@ void send_from_file(char* fileName,int socket, char *keyword);
 void protocol_send(char *message, char *keyword, int socket);
 void getQuestion(char* fileName, int questionNr, char *message);
 int getLineNumber(char* line);
+void writeQuestion(int questionNr, char* answer, char* nickname);
+void send_from_file_special(char* fileName,int socket, char* keyword);
 
 struct sockaddr_in address;
 pthread_t server_listener_thread;
@@ -55,6 +57,9 @@ int clientsnrtosend;
     char protocol_key_select_question[]="selectQuestion";
     char protocol_key_getQuestions_success[]="getQuestionsSuccess";
     char protocol_key_send_answer[]="sendAnswer";
+    char protocol_key_question_answered[]="questionAnswered";
+    char protocol_key_get_answers[]="answersGet";
+    char protocol_key_answers_back[]="123UniqueTest";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
     */
@@ -323,8 +328,31 @@ void *client_handler(void *arg)
             strcpy(procMessage, buf);
             if(extract_data_from_message(procMessage,protocol_key_send_answer))
             {
+                char nick[50];
+                char question[50];
+                char answer[2048];
                 printf("PROC:%s\n",procMessage);
+                char *token;
+                token = strtok(procMessage,"\\");
+                strcpy(nick,token);
+                token = strtok(NULL,"\\");
+                strcpy(answer,token);
+                token = strtok(NULL,"\\");
+                strcpy(question,token);
+                writeQuestion(atoi(question), answer, nick);
+                protocol_send("answered", protocol_key_question_answered, client_sock);
             }
+        }
+
+        else if(checkProtocolKey(buf,protocol_key_get_answers))
+        {
+            strcpy(procMessage, buf);
+            if(extract_data_from_message(procMessage,protocol_key_get_answers))
+            {
+                send_from_file_special(procMessage, client_sock, protocol_key_display_data);
+                //sleep(1);
+            }
+            
         }
 
         else if(checkProtocolKey(buf,protocol_key_exit) || strlen(buf) == 0)
@@ -405,6 +433,52 @@ void send_from_file(char* fileName,int socket, char* keyword)
    
 }
 
+void send_from_file_special(char* fileName,int socket, char* keyword)
+{
+    char* questions;
+    char* location = (char*)malloc(64);
+    FILE *file;
+
+    strcpy(location,"../Files/");
+    strcat(location,fileName);
+    strcat(location,".txt");
+    file = fopen(location, "r");
+
+    if(file == NULL)
+    {
+        perror("Error while opening the questions' file");
+        exit(1);
+    }
+
+    questions = (char*)malloc(sizeof(MAX_LENGTH));
+    if(questions == NULL)
+    {
+        perror("Error allocating the memory");
+        exit(1);
+    }
+
+    char line[1024];
+    char *p;
+    while(fgets(line, MAX_LENGTH, file))
+    {
+        questions = (char*)realloc(questions, sizeof(questions) + MAX_LENGTH);
+        if(questions == NULL)
+        {
+            perror("Error reallocating the memory");
+            exit(1);
+        }
+        printf("%s\n",line);
+        p = strchr(line,'\n');
+        if(p != NULL)
+            strcpy(p,p+1);
+        protocol_send(line,keyword,socket);
+        usleep(5000);
+    }
+    protocol_send("Success", protocol_key_answers_back, socket);
+    fclose(file);
+   
+}
+
 int getLineNumber(char* line)
 {
     int rez = 0;
@@ -463,4 +537,29 @@ void getQuestion(char* fileName, int questionNr, char *message)
     }
     fclose(file);
     strcpy(message, question);
+}
+
+void writeQuestion(int questionNr, char* answer, char* nickname)
+{
+    char fileName[15];
+    sprintf(fileName, "../Files/%d", questionNr);
+    strcat(fileName, ".txt");
+
+    FILE* file = fopen(fileName, "a");
+
+    if(file == NULL)
+    {
+        perror("Error while opening the file");
+        exit(1);
+    }
+
+    char* stringToWrite = (char *)malloc(strlen(answer) + strlen(nickname) + 4);
+    strcpy(stringToWrite, nickname);
+    strcat(stringToWrite, " : ");
+    strcat(stringToWrite, answer);
+    strcat(stringToWrite, "\n");
+    fputs(stringToWrite, file);
+    //printf("String: %s", stringToWrite);
+    fclose(file);
+    
 }

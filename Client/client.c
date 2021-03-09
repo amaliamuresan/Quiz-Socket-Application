@@ -48,6 +48,9 @@ char nickname_message[50] = "Enter nickname!";
     char protocol_key_select_question[]="selectQuestion";
     char protocol_key_getQuestions_success[]="getQuestionsSuccess";
     char protocol_key_send_answer[]="sendAnswer";
+    char protocol_key_question_answered[]="questionAnswered";
+    char protocol_key_get_answers[]="answersGet";
+    char protocol_key_answers_back[]="123UniqueTest";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
     */
@@ -101,6 +104,7 @@ int main()
             protocol_send(scanned, protocol_key_nickname, clientFd);
             strcpy(nickname,scanned);
             usleep(5000);
+            printf("HelloNop");
         }
         else if(state == 1)
         {
@@ -115,15 +119,22 @@ int main()
             getc(stdin);
             getline(&ans, &size, stdin);
             ans[strlen(ans)-1]='\0';
-            printf("AM SCANAT: %s\n",ans);
+            //printf("AM SCANAT: %s\n",ans);
             
             strcpy(answer,nickname);
-            strcat(answer," : ");
+            strcat(answer,"\\");
             strcat(answer,ans);
             strcat(answer,"\\");
             strcat(answer,selected_question);
             protocol_send(answer, protocol_key_send_answer, clientFd);
         }
+        else if(state == 3)
+        {
+            sleep(1);
+            printf("Do you want to return?(Y): ");
+            
+        }
+
 
         while(lock){};
         usleep(5000);
@@ -159,10 +170,10 @@ void *client_receive(void *arg)
     {
         readqt=read(clientfd, buf, 2048);
         buf[readqt]='\0';
-        
+        printf("READ:%s\n", buf);
         if(checkProtocolKey(buf,protocol_key_error))
         {
-            //printf("READ:%s\n", buf);
+            
             strcpy(procMessage,buf);
             //printf("MYPROC:%s\n",procMessage);
             if(extract_data_from_message(procMessage,protocol_key_error))
@@ -227,6 +238,20 @@ void *client_receive(void *arg)
                 }
             }
         }
+        else if(checkProtocolKey(buf,protocol_key_answers_back))
+        {
+            printf("JERE");
+            //state=3;
+            //lock = 0;
+        }
+        else if(checkProtocolKey(buf,protocol_key_question_answered))
+        {
+            state=3;
+            lock=0;
+            printf("\nAnswers: \n"); 
+            protocol_send(selected_question,protocol_key_get_answers, clientfd);
+        }
+
         if(readqt<0)
         {
             perror("Read error in client_receive");
