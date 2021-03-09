@@ -7,10 +7,17 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include<sys/wait.h>
 
 #define SERVER_PORT 11210
 #define true 1
 #define false 0
+
+int state=0;
+// state 0 - nickname
+// state 1 - choose question
+// state 2 - answer question
+// state 3 - view answered question
 
 int checkProtocolKey(char *message,char *key);
 int extract_data_from_message(char *message,char *key);
@@ -21,8 +28,8 @@ void protocol_send(char *message, char *keyword, int socket);
 pthread_t client_receive_thread;
 int nickname_set = 0;
 char nickname[100];
-
-
+int lock = 0;
+char selected_question[5];
 char nickname_message[50] = "Enter nickname!";
 
 //protocol define
@@ -38,6 +45,9 @@ char nickname_message[50] = "Enter nickname!";
     char protocol_key_nicknameSuccess[]="nicknameSuccess";
     char protocol_key_getQuestions[]="getQuestions";
     char protocol_key_display_data[]="displayData";
+    char protocol_key_select_question[]="selectQuestion";
+    char protocol_key_getQuestions_success[]="getQuestionsSuccess";
+    char protocol_key_send_answer[]="sendAnswer";
     /* USAGE:
         protocol_identifier+"-"+key_something+":"+data;
     */
@@ -45,9 +55,11 @@ char nickname_message[50] = "Enter nickname!";
 
 int main()
 {
-    
+    char answer[2048];
     int clientFd;
     struct sockaddr_in address;
+    size_t size = 0;
+    char *ans;
     address.sin_family = AF_INET;
     address.sin_port = htons(SERVER_PORT);
     
@@ -81,7 +93,8 @@ int main()
 
     while(true)
     {
-        if(!nickname_set)
+        lock = 1;
+        if(!nickname_set && state == 0)
         {
             printf("%s\n", nickname_message);
             scanf("%s",scanned);
@@ -89,6 +102,31 @@ int main()
             strcpy(nickname,scanned);
             usleep(5000);
         }
+        else if(state == 1)
+        {
+            usleep(5000);
+            printf("Select question: ");
+            scanf("%s", scanned);
+            strcpy(selected_question,scanned);
+            protocol_send(scanned, protocol_key_select_question, clientFd);
+        }
+        else if(state == 2)
+        {
+            getc(stdin);
+            getline(&ans, &size, stdin);
+            ans[strlen(ans)-1]='\0';
+            printf("AM SCANAT: %s\n",ans);
+            
+            strcpy(answer,nickname);
+            strcat(answer," : ");
+            strcat(answer,ans);
+            strcat(answer,"\\");
+            strcat(answer,selected_question);
+            protocol_send(answer, protocol_key_send_answer, clientFd);
+        }
+
+        while(lock){};
+        usleep(5000);
     }
 
     /*
@@ -112,14 +150,14 @@ int main()
 
 void *client_receive(void *arg)
 {
-    char buf[1025] = {0};
-    char procMessage[1025];
+    char buf[2048] = {0};
+    char procMessage[2048];
     int readqt;
     int *clientfdp=(int *)arg;
     int clientfd=*clientfdp;
     while(true)
     {
-        readqt=read(clientfd, buf, 1024);
+        readqt=read(clientfd, buf, 2048);
         buf[readqt]='\0';
         
         if(checkProtocolKey(buf,protocol_key_error))
@@ -138,21 +176,55 @@ void *client_receive(void *arg)
                     //printf("%s\n",procMessage);
                     printf("Nickname \"%s\" is already in use!\n", nickname);
                 }
+                else if(strcmp(procMessage, "questionNotFound") == 0)
+                {
+                    printf("Not a valid selection! Select a valid number!\n");
+                }
             }
         }
-        if(checkProtocolKey(buf,protocol_key_nicknameSuccess))
+        else if(checkProtocolKey(buf,protocol_key_nicknameSuccess))
         {
             nickname_set = 1;
             system("clear");
             printf("Welcome, %s!\n\n",nickname);
             printf("Choose a question from this list:\n");
             protocol_send("questions", protocol_key_getQuestions, clientfd);
+            
         }
-        if(checkProtocolKey(buf,protocol_key_display_data))
+        else if(checkProtocolKey(buf,protocol_key_getQuestions_success))
         {
+            state=1;
+            lock=0;
+        }
+        else if(checkProtocolKey(buf,protocol_key_display_data))
+        {
+            //printf("%s\n",buf);
+            strcpy(procMessage, buf);
             if(extract_data_from_message(procMessage,protocol_key_display_data))
             {
                 printf("%s\n",procMessage);
+            }
+        }
+        else if(checkProtocolKey(buf,protocol_key_select_question))
+        {
+            //printf("DATA: %s\n",buf);
+            strcpy(procMessage, buf);
+            if(extract_data_from_message(procMessage,protocol_key_select_question))
+            {
+                if(strcmp(procMessage,"questionIncoming"))
+                {
+                    
+                }
+                else if(strcmp(procMessage,"questionSent"))
+                {
+                    printf("\nWrite your answer for the next question: \n");
+                    state = 2;
+                    lock = 0;
+                }
+                else
+                {
+                    printf("%s\n",procMessage);
+                }
             }
         }
         if(readqt<0)
@@ -200,7 +272,7 @@ int checkProtocolKey(char *message,char *key)
 int extract_data_from_message(char *message,char *key)
 {
     char *str=message+(strlen(protocol_identifier)+1+strlen(key)+1);
-    char str2[100];
+    char str2[2048];
     int i=0;
     while(str[i]!=';' && i<strlen(str))
     {
@@ -219,7 +291,7 @@ int extract_data_from_message(char *message,char *key)
 
 void protocol_send(char *message, char *keyword, int socket)
 {
-    char message_to_send[1000];
+    char message_to_send[2048];
     strcpy(message_to_send, "protocolv1.2021-");
     strcat(message_to_send, keyword);
     strcat(message_to_send,":");
