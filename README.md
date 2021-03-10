@@ -6,20 +6,6 @@
 - compile server.c using: gcc -pthread -o server server.c
 - run program using: ./server
 
-### Priority tasks
-
-- [X] Server setup routine - Theo
-- [X] Server listener thread (listen for incoming connections from clients) - Theo
-- [ ] Server client handler thread (unique thread for each connected client) - Dorian
-	- [ ] Client communication (receive)
-- [ ] Server client transmission (data transmission) - Vlad
-
-
-- [X] Client initialization routine - Amalia
-- [X] Client connect to server routine - Amalia
-- [ ] Client receive thread (server -> client) - Dorian
-- [ ] Client transmission function (client -> server) - Vlad
-
 
 
 ### Server:
@@ -28,11 +14,11 @@
 	- [X] Read from files
 	- [X] Modify files (eg: a client answers a question, and his answer is saved)
 - [X] Server listener thread (listen for incoming connections from clients)
-- [ ] Server client handler thread (unique thread for each connected client)
-	- [ ] Client identification (eg: nickname -> client socket)
-	- [ ] Client communication (recieve)
-- [ ] Client keyword interpretation
-- [ ] Server client transmission (data transmission)
+- [X] Server client handler thread (unique thread for each connected client)
+	- [X] Client identification (eg: nickname -> client socket)
+	- [X] Client communication (recieve)
+- [X] Client keyword interpretation
+- [X] Server client transmission (data transmission)
 	- eg: send_data_function(data, client_socket)
 - [ ] Optional Client status check thread
 	- if a client stopped responding or failed the conenction, we cand disconnect it
@@ -46,14 +32,14 @@
 ### Client:
 - [X] Client initialization routine
 - [X] Client connect to server routine
-- [ ] Client receive thread (server -> client)
-- [ ] Client transmission function (client -> server)
-- [ ] Client set nickname
-- [ ] Client question list menu
-- [ ] Client answer question menu
-	- [ ] Question answered
-	- [ ] Display your answer, others answer and the correct/suggested answer
-	- [ ] Possible return to menu
+- [X] Client receive thread (server -> client)
+- [X] Client transmission function (client -> server)
+- [X] Client set nickname
+- [X] Client question list menu
+- [X] Client answer question menu
+	- [X] Question answered
+	- [X] Display your answer, others answer and the correct/suggested answer
+	- [X] Possible return to menu
 - [ ] Optional disconnect from server
 	- Using keyword "Exit"
 	- After disconnect from server, program ends, ? console will close
