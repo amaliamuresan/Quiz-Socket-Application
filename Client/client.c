@@ -96,45 +96,56 @@ int main()
 
     while(true)
     {
-        lock = 1;
-        if(!nickname_set && state == 0)
+        if(lock == 0)
         {
-            printf("%s\n", nickname_message);
-            scanf("%s",scanned);
-            protocol_send(scanned, protocol_key_nickname, clientFd);
-            strcpy(nickname,scanned);
-            usleep(5000);
-        }
-        else if(state == 1)
-        {
-            usleep(5000);
-            printf("Select question: ");
-            scanf("%s", scanned);
-            strcpy(selected_question,scanned);
-            protocol_send(scanned, protocol_key_select_question, clientFd);
-        }
-        else if(state == 2)
-        {
-            getc(stdin);
-            getline(&ans, &size, stdin);
-            ans[strlen(ans)-1]='\0';
-            //printf("AM SCANAT: %s\n",ans);
-            strcpy(answer,nickname);
-            strcat(answer,"\\");
-            strcat(answer,ans);
-            strcat(answer,"\\");
-            strcat(answer,selected_question);
-            protocol_send(answer, protocol_key_send_answer, clientFd);
-        }
-        else if(state == 3)
-        {
-            sleep(2);
-            printf("Do you want to return?(Y): ");
-            
-        }
+            lock = 1;
+            if(!nickname_set && state == 0)
+            {
+                printf("%s\n", nickname_message);
+                scanf("%s",scanned);
+                protocol_send(scanned, protocol_key_nickname, clientFd);
+                strcpy(nickname,scanned);
+                usleep(5000);
+            }
+            else if(state == 1)
+            {
+                usleep(5000);
+                printf("Select question: ");
+                scanf("%s", scanned);
+                strcpy(selected_question,scanned);
+                protocol_send(scanned, protocol_key_select_question, clientFd);
+            }
+            else if(state == 2)
+            {
+                getc(stdin);
+                getline(&ans, &size, stdin);
+                ans[strlen(ans)-1]='\0';
+                //printf("AM SCANAT: %s\n",ans);
+                strcpy(answer,nickname);
+                strcat(answer,"\\");
+                strcat(answer,ans);
+                strcat(answer,"\\");
+                strcat(answer,selected_question);
+                protocol_send(answer, protocol_key_send_answer, clientFd);
+            }
+            else if(state == 3)
+            {
+                printf("Do you want to return?(Y): \n");
+                scanf("%s",scanned);
+                while(scanned[0] != 'Y')
+                {
+                    scanf("%s",scanned);
+                }
+                if(scanned[0] == 'Y')
+                {
+                    system("clear");
+                    printf("Welcome, %s!\n\n",nickname);
+                    printf("Choose a question from this list:\n");
+                    protocol_send("questions", protocol_key_getQuestions, clientFd);
+                }
 
-
-        while(lock){};
+            }
+        }
         usleep(5000);
     }
 
@@ -169,6 +180,8 @@ void *client_receive(void *arg)
         readqt=read(clientfd, buf, 2048);
         buf[readqt]='\0';
         //printf("READ:%s\n", buf);
+        //printf("AFTER READ\n");
+        //printf("READ BEFORE IF:%s\n", buf);
         if(checkProtocolKey(buf,protocol_key_error))
         {
             
@@ -184,9 +197,11 @@ void *client_receive(void *arg)
                     system("clear");
                     //printf("%s\n",procMessage);
                     printf("Nickname \"%s\" is already in use!\n", nickname);
+                    lock = 0;
                 }
                 else if(strcmp(procMessage, "questionNotFound") == 0)
                 {
+                    lock = 0;
                     printf("Not a valid selection! Select a valid number!\n");
                 }
             }
@@ -220,23 +235,14 @@ void *client_receive(void *arg)
             strcpy(procMessage, buf);
             if(extract_data_from_message(procMessage,protocol_key_select_question))
             {
-                if(strcmp(procMessage,"questionIncoming"))
-                {
-                    
-                }
-                else if(strcmp(procMessage,"questionSent"))
+                if(strcmp(procMessage,"questionSent"))
                 {
                     printf("\nWrite your answer for the next question: \n");
                     state = 2;
                     lock = 0;
                 }
-                else
-                {
-                    printf("%s\n",procMessage);
-                }
             }
         }
-
         else if(checkProtocolKey(buf,protocol_key_question_answered))
         {
             printf("\nAnswers: \n"); 
@@ -244,9 +250,8 @@ void *client_receive(void *arg)
         }
         else if(checkProtocolKey(buf,protocol_key_answers_back))
         {
-            printf("JERE");
-            //state=3;
-            //lock = 0;
+            state=3;
+            lock = 0;
         }
 
         if(readqt<0)
@@ -264,6 +269,7 @@ int checkProtocolKey(char *message,char *key)
 {
     int i,pos,ok;
     ok=true;
+
     for(i=0;i<strlen(protocol_identifier) && ok==true;i++)
     {
         if(message[i]!=protocol_identifier[i])
@@ -271,11 +277,15 @@ int checkProtocolKey(char *message,char *key)
             ok=false;
         }
     }
+
+
     pos=i;
     if(message[pos]!='-' && ok==true)
     {
         ok=false;
     }
+
+
     pos++;
     for(i=0;i<strlen(key) && ok==true;i++)
     {
@@ -284,11 +294,13 @@ int checkProtocolKey(char *message,char *key)
             ok=false;
         }
     }
+
     pos+=i;
     if(message[pos]!=':' && ok==true)
     {
         ok=false;
     }
+
     return ok;
 }
 int extract_data_from_message(char *message,char *key)
